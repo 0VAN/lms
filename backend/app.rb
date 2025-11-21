@@ -26,10 +26,11 @@ module Library
     end
 
     before do
-      response.headers['Access-Control-Allow-Origin'] = ENV.fetch('CORS_ORIGIN', '*')
+      cors_origin = ENV.fetch('CORS_ORIGIN', 'http://localhost:5173')
+      response.headers['Access-Control-Allow-Origin'] = cors_origin
       response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
       response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
-      response.headers['Access-Control-Allow-Credentials'] = 'true'
+      response.headers['Access-Control-Allow-Credentials'] = (cors_origin == '*' ? 'false' : 'true')
       content_type :json unless request.request_method == 'OPTIONS'
     end
 

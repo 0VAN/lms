@@ -25,6 +25,9 @@ bundle exec rails server --port 4567
 SEED_SAMPLE_DATA=1 bundle exec rails server --port 4567
 ```
 
+- CORS: The API allows cross-origin calls from `CORS_ORIGIN` (defaults to `http://localhost:5173`). If you set
+  `CORS_ORIGIN="*"`, credentialed requests are disabled for safety.
+
 ### Tests
 RSpec covers authentication, authorization, book management, borrowing rules, and dashboards.
 ```bash
