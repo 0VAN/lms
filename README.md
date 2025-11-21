@@ -1,16 +1,14 @@
 # Library Management System
 
-A small full-stack library management system with a Sinatra API backend and a Vite + React (TypeScript) frontend. Features include authentication with librarian/member roles, book catalog CRUD, borrowing/return flows, and dashboards for both user types.
+A small full-stack library management system with a Rails API backend and a Vite + React (TypeScript) frontend. Features include authentication with librarian/member roles, book catalog CRUD, borrowing/return flows, and dashboards for both user types.
 
-## Backend (Ruby + Sinatra)
+## Backend (Ruby on Rails API)
 - Location: `backend/`
 - Structure:
-  - `lib/library/data_store.rb` – in-memory persistence for users, books, borrowings, and tokens.
-  - `lib/library/authentication.rb` – registration, login, logout, and token handling.
-  - `lib/library/book_management.rb` – librarian-only CRUD and searching.
-  - `lib/library/borrowing.rb` – member borrowing rules and librarian returns.
-  - `lib/library/dashboard.rb` – aggregates role-based dashboard data.
-  - `app.rb` – Sinatra API wiring all services together.
+  - `lib/library/data_store.rb` – in-memory persistence for users, books, borrowings, and tokens (no external DB required).
+  - `lib/library/*` – authentication, book management, borrowing, dashboard services, and a registry to share them.
+  - `config/` – Rails API configuration, CORS, routes, and Puma server (port `4567`).
+  - `app/controllers` – Rails controllers exposing the REST API endpoints.
 - Key endpoints (port `4567`):
   - `POST /register`, `POST /login`, `POST /logout`
   - `GET /books`, `POST /books`, `PUT|PATCH /books/:id`, `DELETE /books/:id`
@@ -21,10 +19,10 @@ A small full-stack library management system with a Sinatra API backend and a Vi
 ```bash
 cd backend
 bundle install
-bundle exec ruby app.rb # runs on http://localhost:4567 using an in-memory data store
+bundle exec rails server --port 4567
 
 # Optional: pre-seed the in-memory database with sample users/books for quick testing
-SEED_SAMPLE_DATA=1 bundle exec ruby app.rb
+SEED_SAMPLE_DATA=1 bundle exec rails server --port 4567
 ```
 
 ### Tests

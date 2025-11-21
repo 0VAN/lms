@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
+ENV['RAILS_ENV'] ||= 'test'
+require_relative '../config/environment'
 require 'rspec'
 require 'rack/test'
-
-ENV['RACK_ENV'] = 'test'
 
 RSpec.configure do |config|
   config.expect_with :rspec do |expectations|

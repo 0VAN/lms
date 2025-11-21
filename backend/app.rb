@@ -26,7 +26,15 @@ module Library
     end
 
     before do
-      content_type :json
+      response.headers['Access-Control-Allow-Origin'] = ENV.fetch('CORS_ORIGIN', '*')
+      response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
+      response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+      response.headers['Access-Control-Allow-Credentials'] = 'true'
+      content_type :json unless request.request_method == 'OPTIONS'
+    end
+
+    options '*' do
+      status 204
     end
 
     helpers do

@@ -1,7 +1,8 @@
-require_relative '../app'
+# frozen_string_literal: true
+
 require_relative './spec_helper'
 
-describe 'Library::DataStore' do
+RSpec.describe 'Library::DataStore' do
   def build_store
     Library::DataStore.new
   end
@@ -25,12 +26,9 @@ describe 'Library::DataStore' do
     borrow = store.borrow_book(user[:id], book[:id])
     expect(borrow[:due_date]).to eq(Date.today + 14)
 
-    begin
+    expect do
       store.borrow_book(user[:id], book[:id])
-      raise 'expected failure'
-    rescue => e
-      expect(e.message).to eq('already borrowed')
-    end
+    end.to raise_error('already borrowed')
   end
 
   it 'allows librarians to manage books and returns' do

@@ -1,18 +1,17 @@
 # frozen_string_literal: true
 
 require 'json'
-require_relative '../app'
 require_relative './spec_helper'
 
-RSpec.describe Library::App do
+RSpec.describe 'Library Rails API' do
   include Rack::Test::Methods
 
   def app
-    described_class
+    Rails.application
   end
 
   before do
-    described_class.reset_store!
+    Library::Registry.reset!(seed: false)
   end
 
   def auth_header(token)
@@ -20,11 +19,11 @@ RSpec.describe Library::App do
   end
 
   def register(email:, password:, role:)
-    post '/register', { email: email, password: password, role: role }.to_json, 'CONTENT_TYPE' => 'application/json'
+    post '/register', { email: email, password: password, role: role }
   end
 
   def login(email:, password:)
-    post '/login', { email: email, password: password }.to_json, 'CONTENT_TYPE' => 'application/json'
+    post '/login', { email: email, password: password }
     JSON.parse(last_response.body, symbolize_names: true)
   end
 
@@ -41,13 +40,11 @@ RSpec.describe Library::App do
     register(email: 'lib@example.com', password: 'secret', role: 'librarian')
     auth = login(email: 'lib@example.com', password: 'secret')
 
-    post '/books', { title: 'Test', author: 'Author', genre: 'Fiction', isbn: '123', total_copies: 2 }.to_json,
-         auth_header(auth[:token]).merge('CONTENT_TYPE' => 'application/json')
+    post '/books', { title: 'Test', author: 'Author', genre: 'Fiction', isbn: '123', total_copies: 2 }, auth_header(auth[:token])
     expect(last_response.status).to eq(201)
     book = JSON.parse(last_response.body, symbolize_names: true)
 
-    put "/books/#{book[:id]}", { title: 'Updated Title' }.to_json,
-        auth_header(auth[:token]).merge('CONTENT_TYPE' => 'application/json')
+    put "/books/#{book[:id]}", { title: 'Updated Title' }, auth_header(auth[:token])
     expect(last_response.status).to eq(200)
 
     get '/books', { title: 'Updated' }
@@ -60,17 +57,16 @@ RSpec.describe Library::App do
   it 'prevents duplicate borrowing and enforces availability limits' do
     register(email: 'lib@example.com', password: 'secret', role: 'librarian')
     lib_auth = login(email: 'lib@example.com', password: 'secret')
-    post '/books', { title: 'Test', author: 'Author', genre: 'Fiction', isbn: '123', total_copies: 1 }.to_json,
-         auth_header(lib_auth[:token]).merge('CONTENT_TYPE' => 'application/json')
+    post '/books', { title: 'Test', author: 'Author', genre: 'Fiction', isbn: '123', total_copies: 1 }, auth_header(lib_auth[:token])
     book = JSON.parse(last_response.body, symbolize_names: true)
 
     register(email: 'mem@example.com', password: 'secret', role: 'member')
     member_auth = login(email: 'mem@example.com', password: 'secret')
 
-    post "/books/#{book[:id]}/borrow", {}.to_json, auth_header(member_auth[:token])
+    post "/books/#{book[:id]}/borrow", {}, auth_header(member_auth[:token])
     expect(last_response.status).to eq(201)
 
-    post "/books/#{book[:id]}/borrow", {}.to_json, auth_header(member_auth[:token])
+    post "/books/#{book[:id]}/borrow", {}, auth_header(member_auth[:token])
     expect(last_response.status).to eq(400)
     expect(JSON.parse(last_response.body)['error']).to eq('already borrowed')
   end
@@ -78,22 +74,20 @@ RSpec.describe Library::App do
   it 'tracks borrowing lifecycle and dashboards' do
     register(email: 'lib@example.com', password: 'secret', role: 'librarian')
     lib_auth = login(email: 'lib@example.com', password: 'secret')
-    post '/books', { title: 'Test', author: 'Author', genre: 'Fiction', isbn: '123', total_copies: 2 }.to_json,
-         auth_header(lib_auth[:token]).merge('CONTENT_TYPE' => 'application/json')
+    post '/books', { title: 'Test', author: 'Author', genre: 'Fiction', isbn: '123', total_copies: 2 }, auth_header(lib_auth[:token])
     book = JSON.parse(last_response.body, symbolize_names: true)
 
     register(email: 'mem@example.com', password: 'secret', role: 'member')
     member_auth = login(email: 'mem@example.com', password: 'secret')
 
-    post "/books/#{book[:id]}/borrow", {}.to_json, auth_header(member_auth[:token])
+    post "/books/#{book[:id]}/borrow", {}, auth_header(member_auth[:token])
     borrowing = JSON.parse(last_response.body, symbolize_names: true)
 
     get '/dashboard', {}, auth_header(member_auth[:token])
     member_dashboard = JSON.parse(last_response.body, symbolize_names: true)
     expect(member_dashboard[:borrowed].first[:book]).to eq('Test')
 
-    # Mark overdue for librarian dashboard visibility
-    store = described_class.settings.store
+    store = Library::Registry.store
     store.find_borrowing(borrowing[:id])[:due_date] = Date.today - 1
 
     post "/borrowings/#{borrowing[:id]}/return", {}, auth_header(lib_auth[:token])
