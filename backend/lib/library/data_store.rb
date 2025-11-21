@@ -2,6 +2,7 @@
 
 require 'securerandom'
 require 'date'
+require_relative 'seed_data'
 
 module Library
   # In-memory persistence for users, books, borrowings, and tokens.
@@ -122,21 +123,41 @@ module Library
     end
 
     # Optional utility to pre-populate sample data for manual testing.
-    def seed_sample_data!
+    def seed_sample_data!(preset: :demo)
       return if @seeded
 
-      librarian = create_user(email: 'librarian@example.com', password: 'password', role: 'librarian')
-      member = create_user(email: 'member@example.com', password: 'password', role: 'member')
+      data = Library::SeedData.fetch(preset)
 
-      books = [
-        create_book(title: 'The Ruby Way', author: 'Hal Fulton', genre: 'Programming', isbn: '9780321714633', total_copies: 3),
-        create_book(title: 'Practical Object-Oriented Design', author: 'Sandi Metz', genre: 'Programming', isbn: '9780321721334', total_copies: 2),
-        create_book(title: 'The Pragmatic Programmer', author: 'Andrew Hunt', genre: 'Programming', isbn: '9780135957059', total_copies: 1)
-      ]
+      users_by_email = {}
+      data[:users].each do |user|
+        created = create_user(email: user[:email], password: user[:password], role: user[:role])
+        users_by_email[user[:email]] = created
+      end
 
-      today = Date.today
-      create_borrowing(user_id: member[:id], book_id: books.first[:id], borrowed_at: today - 1, due_date: today + 13)
-      create_borrowing(user_id: member[:id], book_id: books.last[:id], borrowed_at: today - 20, due_date: today - 6)
+      books_by_isbn = {}
+      data[:books].each do |book|
+        created = create_book(
+          title: book[:title],
+          author: book[:author],
+          genre: book[:genre],
+          isbn: book[:isbn],
+          total_copies: book[:total_copies]
+        )
+        books_by_isbn[book[:isbn]] = created
+      end
+
+      data[:borrowings].each do |borrowing|
+        user = users_by_email[borrowing[:user_email]]
+        book = books_by_isbn[borrowing[:book_isbn]]
+        next unless user && book
+
+        borrowed_at = borrowing[:borrowed_at] || (Date.today + (borrowing[:borrowed_at_offset_days] || 0))
+        due_date = borrowing[:due_date] || borrowed_at + (borrowing[:loan_length_days] || 14)
+        record = create_borrowing(user_id: user[:id], book_id: book[:id], borrowed_at: borrowed_at, due_date: due_date)
+
+        record[:returned_at] = borrowing[:returned_at] if borrowing[:returned_at]
+        record[:returned_at] = borrowed_at + borrowing[:returned_after_days] if borrowing[:returned_after_days]
+      end
 
       @seeded = true
     end

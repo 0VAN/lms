@@ -28,6 +28,23 @@ SEED_SAMPLE_DATA=1 bundle exec rails server --port 4567
 - CORS: The API allows cross-origin calls from `CORS_ORIGIN` (defaults to `http://localhost:5173`). If you set
   `CORS_ORIGIN="*"`, credentialed requests are disabled for safety.
 
+### Seeding test data
+- The in-memory store ships with reusable presets defined in `lib/library/seed_data.rb`.
+- Use `SEED_SAMPLE_DATA=1` to load seed data at boot. Pick a preset with `SEED_PRESET=demo` (default) or `SEED_PRESET=test`.
+- You can also load seeds ad-hoc without running the server:
+  ```bash
+  cd backend
+  SEED_PRESET=test bundle exec rails db:seed
+  ```
+
+Demo preset users for quick UI testing:
+- Librarian: `librarian@example.com` / `password`
+- Member: `member@example.com` / `password`
+
+Test preset users (overdue + returned examples for dashboards):
+- Librarian: `librarian@test.com` / `password`
+- Members: `member@test.com`, `member2@test.com` (password `password`)
+
 ### Tests
 RSpec covers authentication, authorization, book management, borrowing rules, and dashboards.
 ```bash
