@@ -1,0 +1,14 @@
+source 'https://rubygems.org'
+
+ruby '3.2.2'
+
+gem 'rails', '~> 7.1.3'
+gem 'puma', '~> 6.4'
+gem 'rack-cors'
+gem 'rack-test'
+gem 'rspec'
+gem 'bootsnap', require: false
+
+group :development, :test do
+  gem 'listen', '~> 3.8'
+end
