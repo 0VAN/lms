@@ -21,7 +21,10 @@ A small full-stack library management system with a Sinatra API backend and a Vi
 ```bash
 cd backend
 bundle install
-bundle exec ruby app.rb # runs on http://localhost:4567
+bundle exec ruby app.rb # runs on http://localhost:4567 using an in-memory data store
+
+# Optional: pre-seed the in-memory database with sample users/books for quick testing
+SEED_SAMPLE_DATA=1 bundle exec ruby app.rb
 ```
 
 ### Tests

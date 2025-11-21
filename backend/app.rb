@@ -17,6 +17,7 @@ module Library
 
     def self.reset_store!
       store = DataStore.new
+      store.seed_sample_data! if ENV['SEED_SAMPLE_DATA']
       set :store, store
       set :auth_service, Authentication.new(store)
       set :book_service, BookManagement.new(store)

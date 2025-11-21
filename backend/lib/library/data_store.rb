@@ -16,6 +16,7 @@ module Library
       @user_seq = 0
       @book_seq = 0
       @borrow_seq = 0
+      @seeded = false
     end
 
     def create_user(email:, password:, role: 'member')
@@ -118,6 +119,26 @@ module Library
 
     def all_borrowings
       @borrowings.dup
+    end
+
+    # Optional utility to pre-populate sample data for manual testing.
+    def seed_sample_data!
+      return if @seeded
+
+      librarian = create_user(email: 'librarian@example.com', password: 'password', role: 'librarian')
+      member = create_user(email: 'member@example.com', password: 'password', role: 'member')
+
+      books = [
+        create_book(title: 'The Ruby Way', author: 'Hal Fulton', genre: 'Programming', isbn: '9780321714633', total_copies: 3),
+        create_book(title: 'Practical Object-Oriented Design', author: 'Sandi Metz', genre: 'Programming', isbn: '9780321721334', total_copies: 2),
+        create_book(title: 'The Pragmatic Programmer', author: 'Andrew Hunt', genre: 'Programming', isbn: '9780135957059', total_copies: 1)
+      ]
+
+      today = Date.today
+      create_borrowing(user_id: member[:id], book_id: books.first[:id], borrowed_at: today - 1, due_date: today + 13)
+      create_borrowing(user_id: member[:id], book_id: books.last[:id], borrowed_at: today - 20, due_date: today - 6)
+
+      @seeded = true
     end
   end
 end
